@@ -43,7 +43,7 @@ jobs:
           curl -fsSLO "${RELEASE_URL}/${ARCHIVE}"
           curl -fsSLO "${RELEASE_URL}/checksums.txt"
 
-          grep -F "  ${ARCHIVE}" checksums.txt | sha256sum --check
+          awk -v archive="$ARCHIVE" '$2 == archive' checksums.txt | sha256sum --check
 
           tar -xzf "${ARCHIVE}" conftest
           sudo install -m 0755 conftest /usr/local/bin/conftest
