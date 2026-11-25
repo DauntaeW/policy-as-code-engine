@@ -1,0 +1,92 @@
+
+name: Terraform Policy CI
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  policy-validation:
+    name: Terraform and Policy Validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.15.8
+          terraform_wrapper: false
+
+      - name: Install Conftest
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          VERSION="0.71.1"
+          ARCHIVE="conftest_${VERSION}_Linux_x86_64.tar.gz"
+          RELEASE_URL="https://github.com/open-policy-agent/conftest/releases/download/v${VERSION}"
+
+          curl -fsSLO "${RELEASE_URL}/${ARCHIVE}"
+          curl -fsSLO "${RELEASE_URL}/checksums.txt"
+
+          grep -F "  ${ARCHIVE}" checksums.txt | sha256sum --check
+
+          tar -xzf "${ARCHIVE}" conftest
+          sudo install -m 0755 conftest /usr/local/bin/conftest
+
+          conftest --version
+
+      - name: Verify tool versions
+        run: |
+          terraform version
+          conftest --version
+
+      - name: Run network policy unit tests
+        run: |
+          conftest verify --policy policies/network
+
+      - name: Initialize Terraform
+        working-directory: examples/phase-2-schema-lab
+        run: |
+          terraform init \
+            -backend=false \
+            -input=false \
+            -lockfile=readonly
+
+      - name: Validate Terraform configuration
+        working-directory: examples/phase-2-schema-lab
+        run: |
+          terraform validate -no-color
+
+      - name: Generate Terraform plan and evaluate policies
+        working-directory: examples/phase-2-schema-lab
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          trap 'rm -f tfplan tfplan.json' EXIT
+
+          terraform plan \
+            -refresh=false \
+            -input=false \
+            -no-color \
+            -out=tfplan
+
+          terraform show -json tfplan > tfplan.json
+
+          conftest test tfplan.json \
+            --policy ../../policies/network

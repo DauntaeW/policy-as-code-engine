@@ -1,0 +1,60 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+*.tfvars
+!*.tfvars.example
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform plan artifacts
+tfplan
+tfplan.json
+
+# Terraform CLI configuration
+.terraformrc
+terraform.rc
+
+# Terraform debug logs
+terraform-debug.log
+
+# Generated Terraform provider schema
+examples/phase-2-schema-lab/provider-schema.json
+
+# OPA / Conftest
+*.wasm
+*.bundle.tar.gz
+
+# Secrets and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+credentials/
+
+# Operating system
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editors
+.vscode/
+.idea/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# Python
+__pycache__/
+*.py[cod]
