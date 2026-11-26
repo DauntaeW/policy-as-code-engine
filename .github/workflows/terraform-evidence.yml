@@ -88,5 +88,24 @@ jobs:
 
           terraform show -json tfplan > tfplan.json
 
+          echo "=== NET-002 RESOURCE REPRESENTATION ==="
+
+          jq '
+          [
+            .resource_changes[]
+            | select(
+                (.address == "aws_security_group.inline")
+                or (.address | test("rdp"; "i"))
+              )
+            | {
+                address,
+                type,
+                actions: .change.actions,
+                after: .change.after,
+                after_unknown: .change.after_unknown
+              }
+          ]
+          ' tfplan.json
+          
           conftest test tfplan.json \
             --policy ../../policies/network
