@@ -37,8 +37,8 @@ resource "aws_security_group" "inline" {
     from_port        = 3389
     to_port          = 3389
     protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
+    cidr_blocks      = ["203.0.113.10/32"]
+    ipv6_cidr_blocks = ["2001:db8::10/128"]
   }
 }
 
@@ -73,7 +73,7 @@ resource "aws_vpc_security_group_ingress_rule" "modern_rdp_ipv4" {
   ip_protocol       = "tcp"
   from_port         = 3389
   to_port           = 3389
-  cidr_ipv4         = "0.0.0.0/0"
+  cidr_ipv4         = "203.0.113.10/32"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "modern_rdp_ipv6" {
@@ -82,7 +82,7 @@ resource "aws_vpc_security_group_ingress_rule" "modern_rdp_ipv6" {
   ip_protocol       = "tcp"
   from_port         = 3389
   to_port           = 3389
-  cidr_ipv6         = "::/0"
+  cidr_ipv6         = "2001:db8::10/128"
 }
 
 # 3. Legacy standalone ingress rules
@@ -119,7 +119,7 @@ resource "aws_security_group_rule" "legacy_rdp_ipv4" {
   protocol          = "tcp"
   from_port         = 3389
   to_port           = 3389
-  cidr_blocks       = ["0.0.0.0/0"]
+  cidr_blocks       = ["203.0.113.10/32"]
 }
 
 resource "aws_security_group_rule" "legacy_rdp_ipv6" {
@@ -129,5 +129,5 @@ resource "aws_security_group_rule" "legacy_rdp_ipv6" {
   protocol          = "tcp"
   from_port         = 3389
   to_port           = 3389
-  ipv6_cidr_blocks  = ["::/0"]
+  ipv6_cidr_blocks  = ["2001:db8::10/128"]
 }

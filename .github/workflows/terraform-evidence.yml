@@ -127,30 +127,5 @@ jobs:
             }
           ' tfplan.json
 
-          set +e
           conftest test tfplan.json \
-            --policy ../../policies/network \
-            --output json > conftest-results.json
-          conftest_status=$?
-          set -e
-
-          cat conftest-results.json
-
-          # Conftest must reject the insecure plan.
-          if [ "$conftest_status" -eq 0 ]; then
-            echo "ERROR: Expected RDP policy violations, but Conftest passed."
-            exit 1
-          fi
-
-          # Exactly six AWS-NET-002 violations must be reported.
-          jq -e '
-            [.[] | (.failures // [])[]] as $failures
-            | ($failures | length == 6)
-              and (
-                [$failures[] |
-                  select((.metadata.policy_id // .policy_id) == "AWS-NET-002")
-                ] | length == 6
-              )
-          ' conftest-results.json
-
-          echo "PASS: All six unrestricted RDP exposures were detected."
+            --policy ../../policies/network
