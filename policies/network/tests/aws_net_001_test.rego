@@ -6,6 +6,16 @@ import rego.v1
 # Test helpers
 # --------------------------------------------------
 
+net001_policy_violations(plan) := filtered if {
+    all := data.main.violations with input as plan
+
+    filtered := {
+        violation |
+        some violation in all
+        violation.policy_id == "AWS-NET-001"
+    }
+}
+
 make_change(resource_type, address, actions, after) := {
     "address": address,
     "type": resource_type,
@@ -54,7 +64,7 @@ test_inline_public_ipv4_ssh_denied if {
         })
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 1
 }
 
@@ -72,7 +82,7 @@ test_inline_public_ipv6_ssh_denied if {
         })
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 1
 }
 
@@ -88,7 +98,7 @@ test_modern_public_ipv4_ssh_denied if {
         })
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 1
 }
 
@@ -104,7 +114,7 @@ test_modern_public_ipv6_ssh_denied if {
         })
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 1
 }
 
@@ -121,7 +131,7 @@ test_legacy_public_ipv4_ssh_denied if {
         })
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 1
 }
 
@@ -138,7 +148,7 @@ test_legacy_public_ipv6_ssh_denied if {
         })
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 1
 }
 
@@ -154,7 +164,7 @@ test_restricted_ipv4_cidr_allowed if {
         })
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 0
 }
 
@@ -170,7 +180,7 @@ test_non_ssh_port_allowed if {
         })
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 0
 }
 
@@ -187,7 +197,7 @@ test_egress_rule_allowed if {
         })
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 0
 }
 
@@ -203,7 +213,7 @@ test_delete_only_change_allowed if {
         })
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 0
 }
 
@@ -219,7 +229,7 @@ test_tcp_port_range_containing_ssh_denied if {
         })
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 1
 }
 
@@ -235,7 +245,7 @@ test_all_protocol_public_ingress_denied if {
         })
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 1
 }
 
@@ -251,7 +261,7 @@ test_numeric_tcp_protocol_denied if {
         })
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 1
 }
 
@@ -267,7 +277,7 @@ test_violation_contract if {
         })
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 1
 
     some violation in actual
@@ -301,7 +311,7 @@ test_unknown_protocol_with_public_ipv4_denied if {
         )
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 1
 }
 
@@ -323,7 +333,7 @@ test_unknown_port_with_public_ipv4_denied if {
         )
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 1
 }
 
@@ -345,7 +355,7 @@ test_unknown_ipv4_cidr_denied if {
         )
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 1
 }
 
@@ -367,7 +377,7 @@ test_unknown_ipv6_cidr_denied if {
         )
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 1
 }
 
@@ -389,7 +399,7 @@ test_unknown_unrelated_attribute_allowed if {
         )
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 0
 }
 
@@ -425,7 +435,7 @@ test_inline_unknown_protocol_denied if {
         )
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 1
 }
 
@@ -454,7 +464,7 @@ test_inline_unknown_ipv6_cidr_denied if {
         )
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 1
 }
 
@@ -482,7 +492,7 @@ test_inline_unknown_port_denied if {
         )
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 1
 }
 
@@ -513,7 +523,7 @@ test_inline_unknown_unrelated_attribute_allowed if {
         )
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 0
 }
 
@@ -540,7 +550,7 @@ test_legacy_unknown_protocol_denied if {
         )
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 1
 }
 
@@ -563,7 +573,7 @@ test_legacy_unknown_ipv4_cidr_denied if {
         )
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 1
 }
 
@@ -586,7 +596,7 @@ test_legacy_unknown_port_denied if {
         )
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 1
 }
 
@@ -609,6 +619,6 @@ test_legacy_unknown_egress_allowed if {
         )
     ])
 
-    actual := violations with input as plan
+    actual := net001_policy_violations(plan)
     count(actual) == 0
 }
