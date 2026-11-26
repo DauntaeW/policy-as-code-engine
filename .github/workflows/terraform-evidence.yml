@@ -78,7 +78,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          trap 'rm -f tfplan tfplan.json' EXIT
+          trap 'rm -f tfplan tfplan.json conftest-results.json' EXIT
 
           terraform plan \
             -refresh=false \
@@ -88,24 +88,69 @@ jobs:
 
           terraform show -json tfplan > tfplan.json
 
-          echo "=== NET-002 RESOURCE REPRESENTATION ==="
-
-          jq '
-          [
-            .resource_changes[]
-            | select(
-                (.address == "aws_security_group.inline")
-                or (.address | test("rdp"; "i"))
-              )
-            | {
-                address,
-                type,
-                actions: .change.actions,
-                after: .change.after,
-                after_unknown: .change.after_unknown
-              }
-          ]
+          jq -c '
+          .resource_changes[]
+          | select(
+              (.address == "aws_security_group.inline")
+              or (.address | test("rdp"; "i"))
+            )
+          | {
+              address,
+              type,
+              actions: .change.actions,
+              after: (
+                if .type == "aws_security_group" then
+                  [
+                    .change.after.ingress[]
+                    | select(.from_port <= 3389 and .to_port >= 3389)
+                    | {
+                        protocol,
+                        from_port,
+                        to_port,
+                        cidr_blocks,
+                        ipv6_cidr_blocks
+                      }
+                  ]
+                else
+                  {
+                    protocol: (.change.after.protocol // .change.after.ip_protocol),
+                    from_port: .change.after.from_port,
+                    to_port: .change.after.to_port,
+                    cidr_blocks: .change.after.cidr_blocks,
+                    ipv6_cidr_blocks: .change.after.ipv6_cidr_blocks,
+                    cidr_ipv4: .change.after.cidr_ipv4,
+                    cidr_ipv6: .change.after.cidr_ipv6
+                  }
+                end
+              ),
+              after_unknown: .change.after_unknown
+            }
           ' tfplan.json
-          
+
+          set +e
           conftest test tfplan.json \
-            --policy ../../policies/network
+            --policy ../../policies/network \
+            --output json > conftest-results.json
+          conftest_status=$?
+          set -e
+
+          cat conftest-results.json
+
+          # Conftest must reject the insecure plan.
+          if [ "$conftest_status" -eq 0 ]; then
+            echo "ERROR: Expected RDP policy violations, but Conftest passed."
+            exit 1
+          fi
+
+          # Exactly six AWS-NET-002 violations must be reported.
+          jq -e '
+            [.[] | (.failures // [])[]] as $failures
+            | ($failures | length == 6)
+              and (
+                [$failures[] |
+                  select((.metadata.policy_id // .policy_id) == "AWS-NET-002")
+                ] | length == 6
+              )
+          ' conftest-results.json
+
+          echo "PASS: All six unrestricted RDP exposures were detected."
