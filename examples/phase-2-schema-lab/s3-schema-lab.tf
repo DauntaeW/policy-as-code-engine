@@ -57,7 +57,7 @@ resource "aws_s3_bucket_public_access_block" "net004_acl" {
 }
 
 resource "aws_s3_bucket_public_access_block" "net004_policy" {
-  bucket = "policy-engine-net004-acl-schema-lab"
+  bucket = aws_s3_bucket.net004_policy.id
 
   block_public_acls       = false
   ignore_public_acls      = false
