@@ -66,6 +66,20 @@ jobs:
             -backend=false \
             -input=false \
             -lockfile=readonly
+      
+      - name: Inspect S3 provider schemas
+        working-directory: examples/phase-2-schema-lab
+        shell: bash
+        run: |
+          terraform providers schema -json |
+            jq '
+              .provider_schemas["registry.terraform.io/hashicorp/aws"].resource_schemas
+              | with_entries(
+                  select(
+                    .key | test("^aws_s3_(bucket|bucket_acl|bucket_policy|bucket_public_access_block|access_point)$")
+                  )
+                )
+            '      
 
       - name: Validate Terraform configuration
         working-directory: examples/phase-2-schema-lab
