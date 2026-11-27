@@ -76,14 +76,16 @@ jobs:
               .provider_schemas["registry.terraform.io/hashicorp/aws"].resource_schemas
               | with_entries(
                   select(
-                    [
-                      "aws_s3_bucket",
-                      "aws_s3_bucket_acl",
-                      "aws_s3_bucket_policy",
-                      "aws_s3_bucket_public_access_block",
-                      "aws_s3_account_public_access_block",
-                      "aws_s3_access_point"
-                    ] | index(.key)
+                    .key as $key
+                    | [
+                        "aws_s3_bucket",
+                        "aws_s3_bucket_acl",
+                        "aws_s3_bucket_policy",
+                        "aws_s3_bucket_public_access_block",
+                        "aws_s3_account_public_access_block",
+                        "aws_s3_access_point"
+                      ]
+                    | index($key)
                   )
                 )
               | with_entries(
@@ -92,30 +94,21 @@ jobs:
                       (.value.block.attributes // {})
                       | with_entries(
                           select(
-                            [
-                              "acl",
-                              "bucket",
-                              "policy",
-                              "block_public_acls",
-                              "ignore_public_acls",
-                              "block_public_policy",
-                              "restrict_public_buckets"
-                            ] | index(.key)
+                            .key as $key
+                            | [
+                                "acl",
+                                "bucket",
+                                "policy",
+                                "block_public_acls",
+                                "ignore_public_acls",
+                                "block_public_policy",
+                                "restrict_public_buckets"
+                              ]
+                            | index($key)
                           )
                         )
                     ),
-                    block_types: (
-                      (.value.block.block_types // {})
-                      | with_entries(
-                          select(
-                            [
-                              "grant",
-                              "access_control_policy",
-                              "public_access_block_configuration"
-                            ] | index(.key)
-                          )
-                        )
-                    )
+                    block_types: (.value.block.block_types // {})
                   }
                 )
             '
