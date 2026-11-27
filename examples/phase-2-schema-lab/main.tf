@@ -48,8 +48,8 @@ resource "aws_security_group" "inline" {
     from_port        = 5432
     to_port          = 5432
     protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
+    cidr_blocks      = ["203.0.113.10/32"]
+    ipv6_cidr_blocks = ["2001:db8::10/128"]
   }
 
   ingress {
@@ -57,8 +57,8 @@ resource "aws_security_group" "inline" {
     from_port        = 3306
     to_port          = 3306
     protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
+    cidr_blocks      = ["203.0.113.10/32"]
+    ipv6_cidr_blocks = ["2001:db8::10/128"]
   }
 
   ingress {
@@ -66,8 +66,8 @@ resource "aws_security_group" "inline" {
     from_port        = 1433
     to_port          = 1433
     protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
+    cidr_blocks      = ["203.0.113.10/32"]
+    ipv6_cidr_blocks = ["2001:db8::10/128"]
   }
 }
 
@@ -123,7 +123,7 @@ resource "aws_vpc_security_group_ingress_rule" "modern_postgres_ipv4" {
   ip_protocol       = "tcp"
   from_port         = 5432
   to_port           = 5432
-  cidr_ipv4         = "0.0.0.0/0"
+  cidr_ipv4         = "203.0.113.10/32"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "modern_postgres_ipv6" {
@@ -132,7 +132,7 @@ resource "aws_vpc_security_group_ingress_rule" "modern_postgres_ipv6" {
   ip_protocol       = "tcp"
   from_port         = 5432
   to_port           = 5432
-  cidr_ipv6         = "::/0"
+  cidr_ipv6         = "2001:db8::10/128"
 }
 
 # MySQL
@@ -142,7 +142,7 @@ resource "aws_vpc_security_group_ingress_rule" "modern_mysql_ipv4" {
   ip_protocol       = "tcp"
   from_port         = 3306
   to_port           = 3306
-  cidr_ipv4         = "0.0.0.0/0"
+  cidr_ipv4         = "203.0.113.10/32"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "modern_mysql_ipv6" {
@@ -151,7 +151,7 @@ resource "aws_vpc_security_group_ingress_rule" "modern_mysql_ipv6" {
   ip_protocol       = "tcp"
   from_port         = 3306
   to_port           = 3306
-  cidr_ipv6         = "::/0"
+  cidr_ipv6         = "2001:db8::10/128"
 }
 
 # SQL Server
@@ -161,7 +161,7 @@ resource "aws_vpc_security_group_ingress_rule" "modern_sqlserver_ipv4" {
   ip_protocol       = "tcp"
   from_port         = 1433
   to_port           = 1433
-  cidr_ipv4         = "0.0.0.0/0"
+  cidr_ipv4         = "203.0.113.10/32"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "modern_sqlserver_ipv6" {
@@ -170,7 +170,7 @@ resource "aws_vpc_security_group_ingress_rule" "modern_sqlserver_ipv6" {
   ip_protocol       = "tcp"
   from_port         = 1433
   to_port           = 1433
-  cidr_ipv6         = "::/0"
+  cidr_ipv6         = "2001:db8::10/128"
 }
 
 # 3. Legacy standalone ingress rules
@@ -230,7 +230,7 @@ resource "aws_security_group_rule" "legacy_postgres_ipv4" {
   protocol          = "tcp"
   from_port         = 5432
   to_port           = 5432
-  cidr_blocks       = ["0.0.0.0/0"]
+  cidr_blocks       = ["203.0.113.10/32"]
 }
 
 resource "aws_security_group_rule" "legacy_postgres_ipv6" {
@@ -240,7 +240,7 @@ resource "aws_security_group_rule" "legacy_postgres_ipv6" {
   protocol          = "tcp"
   from_port         = 5432
   to_port           = 5432
-  ipv6_cidr_blocks  = ["::/0"]
+  ipv6_cidr_blocks  = ["2001:db8::10/128"]
 }
 
 # MySQL
@@ -251,7 +251,7 @@ resource "aws_security_group_rule" "legacy_mysql_ipv4" {
   protocol          = "tcp"
   from_port         = 3306
   to_port           = 3306
-  cidr_blocks       = ["0.0.0.0/0"]
+  cidr_blocks       = ["203.0.113.10/32"]
 }
 
 resource "aws_security_group_rule" "legacy_mysql_ipv6" {
@@ -261,7 +261,7 @@ resource "aws_security_group_rule" "legacy_mysql_ipv6" {
   protocol          = "tcp"
   from_port         = 3306
   to_port           = 3306
-  ipv6_cidr_blocks  = ["::/0"]
+  ipv6_cidr_blocks  = ["2001:db8::10/128"]
 }
 
 # SQL Server
@@ -272,7 +272,7 @@ resource "aws_security_group_rule" "legacy_sqlserver_ipv4" {
   protocol          = "tcp"
   from_port         = 1433
   to_port           = 1433
-  cidr_blocks       = ["0.0.0.0/0"]
+  cidr_blocks       = ["203.0.113.10/32"]
 }
 
 resource "aws_security_group_rule" "legacy_sqlserver_ipv6" {
@@ -282,5 +282,5 @@ resource "aws_security_group_rule" "legacy_sqlserver_ipv6" {
   protocol          = "tcp"
   from_port         = 1433
   to_port           = 1433
-  ipv6_cidr_blocks  = ["::/0"]
+  ipv6_cidr_blocks  = ["2001:db8::10/128"]
 }
