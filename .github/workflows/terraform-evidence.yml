@@ -66,8 +66,8 @@ jobs:
             -backend=false \
             -input=false \
             -lockfile=readonly
-      
-      - name: Inspect S3 provider schemas
+
+      - name: Inspect S3 security schema
         working-directory: examples/phase-2-schema-lab
         shell: bash
         run: |
@@ -76,10 +76,49 @@ jobs:
               .provider_schemas["registry.terraform.io/hashicorp/aws"].resource_schemas
               | with_entries(
                   select(
-                    .key | test("^aws_s3_(bucket|bucket_acl|bucket_policy|bucket_public_access_block|access_point)$")
+                    [
+                      "aws_s3_bucket",
+                      "aws_s3_bucket_acl",
+                      "aws_s3_bucket_policy",
+                      "aws_s3_bucket_public_access_block",
+                      "aws_s3_account_public_access_block",
+                      "aws_s3_access_point"
+                    ] | index(.key)
                   )
                 )
-            '      
+              | with_entries(
+                  .value = {
+                    attributes: (
+                      (.value.block.attributes // {})
+                      | with_entries(
+                          select(
+                            [
+                              "acl",
+                              "bucket",
+                              "policy",
+                              "block_public_acls",
+                              "ignore_public_acls",
+                              "block_public_policy",
+                              "restrict_public_buckets"
+                            ] | index(.key)
+                          )
+                        )
+                    ),
+                    block_types: (
+                      (.value.block.block_types // {})
+                      | with_entries(
+                          select(
+                            [
+                              "grant",
+                              "access_control_policy",
+                              "public_access_block_configuration"
+                            ] | index(.key)
+                          )
+                        )
+                    )
+                  }
+                )
+            '
 
       - name: Validate Terraform configuration
         working-directory: examples/phase-2-schema-lab
