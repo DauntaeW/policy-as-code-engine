@@ -174,10 +174,7 @@ net004_acl_violation(resource) if {
 
 net004_acl_indeterminate(resource) if {
 	net004_is_active(resource)
-	net004_resource_type(resource) in {
-		"aws_s3_bucket",
-		"aws_s3_bucket_acl",
-	}
+	net004_resource_type(resource) == "aws_s3_bucket_acl"
 	net004_acl_unknown(resource)
 }
 
