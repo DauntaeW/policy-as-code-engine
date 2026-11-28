@@ -1,5 +1,7 @@
 package main
 
+import rego.v1
+
 # AWS-NET-004
 # Prevent Public S3 Bucket Exposure
 #
@@ -24,12 +26,9 @@ net004_required_pab_controls := {
 net004_resources := input.net004.resources if {
 	is_object(input.net004)
 	is_array(input.net004.resources)
-}
-
-net004_resources := input.resource_changes if {
-	not is_object(input.net004)
+} else := input.resource_changes if {
 	is_array(input.resource_changes)
-}
+} else := []
 
 net004_actions(resource) := object.get(
 	resource,

@@ -1,5 +1,7 @@
 package main
 
+import rego.v1
+
 # AWS-NET-004
 # Step 8: Unit tests
 
@@ -478,4 +480,24 @@ test_net004_violation_metadata_is_correct if {
 	violation.resource == "aws_s3_bucket_acl.example"
 	is_string(violation.message)
 	is_string(violation.remediation)
+}
+
+test_net004_terraform_plan_resource_changes_triggers_deny if {
+	plan := {
+		"resource_changes": [{
+			"address": "aws_s3_bucket_acl.net004_acl",
+			"type": "aws_s3_bucket_acl",
+			"change": {
+				"actions": ["create"],
+				"before": null,
+				"after": {"acl": "public-read"},
+				"after_unknown": {},
+			},
+		}],
+	}
+
+	denials := data.main.deny with input as plan
+	some denial in denials
+	denial.policy_id == "AWS-NET-004"
+	denial.msg == "S3 bucket ACL grants public access"
 }
