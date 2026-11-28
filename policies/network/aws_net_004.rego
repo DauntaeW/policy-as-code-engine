@@ -100,6 +100,11 @@ net004_public_canned_acl(resource) if {
 	}
 }
 
+net004_private_canned_acl(resource) if {
+    after := net004_after(resource)
+    object.get(after, "acl", "") == "private"
+}
+
 net004_public_grant(resource) if {
 	after := net004_after(resource)
 	access_policy := object.get(after, "access_control_policy", [])
@@ -176,6 +181,10 @@ net004_acl_indeterminate(resource) if {
 	net004_is_active(resource)
 	net004_resource_type(resource) == "aws_s3_bucket_acl"
 	net004_acl_unknown(resource)
+
+	# A known private canned ACL is sufficient to establish
+    # that the configured ACL does not grant public access.
+    not net004_private_canned_acl(resource)
 }
 
 # ---------------------------------------------------------

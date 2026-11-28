@@ -501,3 +501,17 @@ test_net004_terraform_plan_resource_changes_triggers_deny if {
 	denial.policy_id == "AWS-NET-004"
 	denial.msg == "S3 bucket ACL grants public access"
 }
+
+test_net004_private_acl_with_unknown_computed_access_policy_passes if {
+    count(net004_test_evaluate({
+        "address": "aws_s3_bucket_acl.example",
+        "type": "aws_s3_bucket_acl",
+        "actions": ["create"],
+        "after": {
+            "acl": "private",
+        },
+        "after_unknown": {
+            "access_control_policy": true,
+        },
+    })) == 0
+}
