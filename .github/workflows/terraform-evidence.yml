@@ -183,10 +183,86 @@ jobs:
               }
           ' tfplan.json
 
-          echo "Running Conftest policy evaluation:"
 
+          echo "Running Conftest positive integration test..."
+
+          # Capture Conftest output and exit status without stopping the step.
+          set +e
           conftest test tfplan.json \
-            --policy ../../policies/network
+            --policy ../../policies/network \
+            --output json > conftest-results.json
+          CONFTEST_EXIT_CODE=$?
+          set -e
+
+          echo "Conftest exit code: ${CONFTEST_EXIT_CODE}"
+
+          # Exit code 1 is expected for policy denials.
+          # Any other exit code indicates an unexpected result.
+          if [ "${CONFTEST_EXIT_CODE}" -ne 1 ]; then
+            echo "::error::Expected Conftest policy-denial exit code 1, received ${CONFTEST_EXIT_CODE}."
+            cat conftest-results.json
+            exit 1
+          fi
+
+          # Validate that Conftest produced valid JSON results.
+          if ! jq -e 'type == "array" and length > 0' \
+            conftest-results.json > /dev/null; then
+            echo "::error::Conftest produced invalid or empty JSON output."
+            cat conftest-results.json
+            exit 1
+          fi
+
+          # Rego evaluation exceptions are never expected.
+          EXCEPTION_COUNT=$(jq '
+            [.[] | (.exceptions // [])[]] | length
+          ' conftest-results.json)
+
+          if [ "${EXCEPTION_COUNT}" -ne 0 ]; then
+            echo "::error::Conftest reported ${EXCEPTION_COUNT} evaluation exceptions."
+            jq . conftest-results.json
+            exit 1
+          fi
+
+          # Extract AWS-NET-004 canonical violation metadata.
+          NET004_RESULTS=$(jq '
+            [
+              .[]
+              | (.failures // [])[]
+              | select(.metadata.policy_id? == "AWS-NET-004")
+              | .metadata
+            ]
+          ' conftest-results.json)
+
+          echo "AWS-NET-004 findings:"
+          echo "${NET004_RESULTS}" | jq .
+
+          # Verify the expected violation count.
+          ACTUAL_COUNT=$(echo "${NET004_RESULTS}" | jq 'length')
+          EXPECTED_COUNT=5
+
+          if [ "${ACTUAL_COUNT}" -ne "${EXPECTED_COUNT}" ]; then
+            echo "::error::Expected ${EXPECTED_COUNT} AWS-NET-004 violations, found ${ACTUAL_COUNT}."
+            exit 1
+          fi
+
+          # Verify every expected Terraform resource address.
+          for RESOURCE in \
+            "aws_s3_bucket_acl.net004_acl" \
+            "aws_s3_bucket_policy.net004_policy" \
+            "aws_s3_bucket_public_access_block.net004_acl" \
+            "aws_s3_bucket_public_access_block.net004_policy" \
+            "aws_s3_account_public_access_block.net004"
+          do
+            if ! echo "${NET004_RESULTS}" | jq -e \
+              --arg resource "${RESOURCE}" \
+              'any(.[]; .resource == $resource)' > /dev/null; then
+              echo "::error::Expected violation missing for ${RESOURCE}."
+              exit 1
+            fi
+          done
+
+          echo "Positive integration test passed."
+
 
           rm -f tfplan
 
