@@ -266,11 +266,98 @@ jobs:
 
           rm -f tfplan
 
+      - name: Run negative NET-004 integration test
+        working-directory: examples/phase-2-schema-lab-negative
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Initializing negative Terraform fixture..."
+
+          terraform init \
+            -backend=false \
+            -input=false \
+            -lockfile=readonly
+
+          echo "Validating negative Terraform fixture..."
+
+          terraform validate -no-color
+
+          echo "Generating negative Terraform plan..."
+
+          terraform plan \
+            -refresh=false \
+            -input=false \
+            -no-color \
+            -out=tfplan
+
+          terraform show -json tfplan > tfplan.json
+
+          echo "Running Conftest negative integration test..."
+
+          set +e
+          conftest test tfplan.json \
+            --policy ../../policies/network \
+            --output json > conftest-negative-results.json
+          CONFTEST_EXIT_CODE=$?
+          set -e
+
+          echo "Conftest exit code: ${CONFTEST_EXIT_CODE}"
+
+          if [ "${CONFTEST_EXIT_CODE}" -ne 0 ]; then
+            echo "::error::Expected zero policy denials, received exit code ${CONFTEST_EXIT_CODE}."
+            cat conftest-negative-results.json
+            exit 1
+          fi
+
+          # Confirm Conftest produced valid JSON.
+          if ! jq -e 'type == "array"' \
+            conftest-negative-results.json > /dev/null; then
+            echo "::error::Conftest produced invalid JSON output."
+            cat conftest-negative-results.json
+            exit 1
+          fi
+
+          # Evaluation exceptions must never be accepted.
+          EXCEPTION_COUNT=$(jq '
+            [.[] | (.exceptions // [])[]] | length
+          ' conftest-negative-results.json)
+
+          if [ "${EXCEPTION_COUNT}" -ne 0 ]; then
+            echo "::error::Conftest reported ${EXCEPTION_COUNT} evaluation exceptions."
+            jq . conftest-negative-results.json
+            exit 1
+          fi
+
+          # A compliant fixture must produce zero policy failures.
+          FAILURE_COUNT=$(jq '
+            [.[] | (.failures // [])[]] | length
+          ' conftest-negative-results.json)
+
+          if [ "${FAILURE_COUNT}" -ne 0 ]; then
+            echo "::error::Expected zero policy failures, found ${FAILURE_COUNT}."
+            jq . conftest-negative-results.json
+            exit 1
+          fi
+
+          echo "Negative NET-004 integration test passed."
+
+          rm -f tfplan
+
       - name: Upload Terraform plan JSON
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: terraform-plan-json
           path: examples/phase-2-schema-lab/tfplan.json
+          if-no-files-found: warn
+          retention-days: 2
+
+      - name: Upload negative Terraform plan JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-json-negative
+          path: examples/phase-2-schema-lab-negative/tfplan.json
           if-no-files-found: warn
           retention-days: 2
